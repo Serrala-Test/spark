@@ -1139,12 +1139,12 @@ final class ShuffleBlockFetcherIterator(
       case shuffleBlockChunk: ShuffleBlockChunkId =>
         // TODO SPARK-36284 Add shuffle checksum support for push-based shuffle
         val diagnosisResponse = s"BlockChunk $shuffleBlockChunk is corrupted but corruption " +
-          s"diagnosis is skipped due to lack of shuffle checksum support for push-based shuffle."
+          "diagnosis is skipped due to lack of shuffle checksum support for push-based shuffle."
         logWarning(diagnosisResponse)
         diagnosisResponse
       case shuffleBlockBatch: ShuffleBlockBatchId =>
         val diagnosisResponse = s"BlockBatch $shuffleBlockBatch is corrupted but corruption " +
-          s"diagnosis is skipped due to lack of shuffle checksum support for ShuffleBlockBatchId"
+          "diagnosis is skipped due to lack of shuffle checksum support for ShuffleBlockBatchId"
         logWarning(diagnosisResponse)
         diagnosisResponse
       case unexpected: BlockId =>
