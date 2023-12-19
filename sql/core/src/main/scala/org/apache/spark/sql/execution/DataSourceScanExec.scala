@@ -80,7 +80,7 @@ trait DataSourceScanExec extends LeafExecNode {
 
     s"""
        |$formattedNodeName
-       |${ExplainUtils.generateFieldString("Output", output)}
+       |${QueryPlan.generateFieldString("Output", output)}
        |${metadataStr.mkString("\n")}
        |""".stripMargin
   }
@@ -464,7 +464,7 @@ trait FileSourceScanLike extends DataSourceScanExec {
 
     s"""
        |$formattedNodeName
-       |${ExplainUtils.generateFieldString("Output", output)}
+       |${QueryPlan.generateFieldString("Output", output)}
        |${metadataStr.mkString("\n")}
        |""".stripMargin
   }

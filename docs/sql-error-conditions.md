@@ -1257,6 +1257,20 @@ For more details see [INVALID_PARTITION_OPERATION](sql-error-conditions-invalid-
 
 `<value>` is an invalid property value, please use quotes, e.g. SET `<key>`=`<value>`
 
+### INVALID_RECURSIVE_CTE
+
+[SQLSTATE: 42836](sql-error-conditions-sqlstates.html#class-42-syntax-error-or-access-rule-violation)
+
+Invalid recursive definition found. Recursive queries must contain an UNION or an UNION ALL statement with 2 children. The first child needs to be the anchor term without any recursive references.
+
+### [INVALID_RECURSIVE_REFERENCE](sql-error-conditions-invalid-recursive-reference-error-class.html)
+
+[SQLSTATE: 42836](sql-error-conditions-sqlstates.html#class-42-syntax-error-or-access-rule-violation)
+
+Invalid recursive reference found.
+
+For more details see [INVALID_RECURSIVE_REFERENCE](sql-error-conditions-invalid-recursive-reference-error-class.html)
+
 ### [INVALID_SCHEMA](sql-error-conditions-invalid-schema-error-class.html)
 
 [SQLSTATE: 42K07](sql-error-conditions-sqlstates.html#class-42-syntax-error-or-access-rule-violation)
@@ -1769,6 +1783,18 @@ Protobuf type not yet supported: `<protobufType>`.
 [SQLSTATE: 38000](sql-error-conditions-sqlstates.html#class-38-external-routine-exception)
 
 Failed to `<action>` Python data source `<type>` in Python: `<msg>`
+
+### RECURSIVE_CTE_IN_LEGACY_MODE
+
+[SQLSTATE: 42836](sql-error-conditions-sqlstates.html#class-42-syntax-error-or-access-rule-violation)
+
+Recursive definitions cannot be used in legacy CTE precedence mode (spark.sql.legacy.ctePrecedencePolicy=LEGACY).
+
+### RECURSIVE_CTE_WHEN_INLINING_IS_FORCED
+
+[SQLSTATE: 42836](sql-error-conditions-sqlstates.html#class-42-syntax-error-or-access-rule-violation)
+
+Recursive definitions cannot be used when CTE inlining is forced.
 
 ### RECURSIVE_PROTOBUF_SCHEMA
 
