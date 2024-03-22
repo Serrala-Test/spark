@@ -41,6 +41,7 @@ license: |
 - Since Spark 4.0, the SQL config `spark.sql.legacy.allowZeroIndexInFormatString` is deprecated. Consider to change `strfmt` of the `format_string` function to use 1-based indexes. The first argument must be referenced by "1$", the second by "2$", etc.
 - Since Spark 4.0, JDBC read option `preferTimestampNTZ=true` will not convert Postgres TIMESTAMP WITH TIME ZONE and TIME WITH TIME ZONE data types to TimestampNTZType, which is available in Spark 3.5. 
 - Since Spark 4.0, JDBC read option `preferTimestampNTZ=true` will not convert MySQL TIMESTAMP to TimestampNTZType, which is available in Spark 3.5. MySQL DATETIME is not affected.
+- Since Spark 4.0, the SQL config `spark.sql.parquet.inferTimestampNTZ.enabled` is turned off by default. Consequently, when reading Parquet files that were not produced by Spark, the Parquet reader will no longer automatically recognize data as the TIMESTAMP_NTZ data type. This change ensures backward compatibility with releases of Spark version 3.2 and earlier. It also aligns the behavior of schema inference for Parquet files with that of other data sources such as CSV, JSON, ORC, and JDBC, enhancing consistency across the data sources. To revert to the previous behavior where TIMESTAMP_NTZ types were inferred, set `spark.sql.parquet.inferTimestampNTZ.enabled` to true.
 
 ## Upgrading from Spark SQL 3.4 to 3.5
 
