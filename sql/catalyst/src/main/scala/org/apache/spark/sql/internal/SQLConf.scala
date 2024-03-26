@@ -4598,6 +4598,20 @@ object SQLConf {
       .stringConf
       .createWithDefault("versionAsOf")
 
+  val RELEASE_ANTLR_CACHE_AFTER_PARSING =
+    buildConf("spark.sql.parser.releaseAntlrCacheAfterParsing")
+      .doc("When true, release the ANTLR cache after parsing a SQL query. ANTLR parsers retain a " +
+        "DFA cache designed to speed up parsing future input. However, there is no limit to how " +
+        "large this cache can become and parsing large SQL statements can lead to an " +
+        "accumulation of objects in the cache that are unlikely to be reused. This can deplete " +
+        "the available heap on the driver, leading to high GC overhead and evenatually OOMs. Set " +
+        "this to `true` to release the cache after every SQL statement. On a long-lived driver, " +
+        "it may be beneficial to periodically set this to `true`, run a query to clear the " +
+        "cache, and revert it to `false`.")
+      .version("4.0.0")
+      .booleanConf
+      .createWithDefault(false)
+
   val LEGACY_PERCENTILE_DISC_CALCULATION = buildConf("spark.sql.legacy.percentileDiscCalculation")
     .internal()
     .doc("If true, the old bogus percentile_disc calculation is used. The old calculation " +
@@ -5144,6 +5158,8 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
 
   def broadcastHashJoinOutputPartitioningExpandLimit: Int =
     getConf(BROADCAST_HASH_JOIN_OUTPUT_PARTITIONING_EXPAND_LIMIT)
+
+  override def releaseAntlrCacheAfterParsing: Boolean = getConf(RELEASE_ANTLR_CACHE_AFTER_PARSING)
 
   /**
    * Returns the [[Resolver]] for the current configuration, which can be used to determine if two
