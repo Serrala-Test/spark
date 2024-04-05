@@ -49,6 +49,19 @@ case class MessageWithContext(message: String, context: java.util.HashMap[String
     resultMap.putAll(mdc.context)
     MessageWithContext(message + mdc.message, resultMap)
   }
+
+  def ++(s: String): MessageWithContext = {
+    MessageWithContext(message + s, context)
+  }
+}
+
+object MDC {
+
+  implicit class StringImprovements(val s: String) {
+    def ++(mdc: MessageWithContext): MessageWithContext = {
+     MessageWithContext(s + mdc.message, mdc.context)
+    }
+  }
 }
 
 /**
@@ -107,7 +120,6 @@ trait Logging {
         if (Logging.isStructuredLoggingEnabled) {
           context.put(mdc.key.toString.toLowerCase(Locale.ROOT), mdc.value.toString)
         }
-
         if (processedParts.hasNext) {
           sb.append(processedParts.next())
         }

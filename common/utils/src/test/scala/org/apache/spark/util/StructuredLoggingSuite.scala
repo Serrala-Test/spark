@@ -27,6 +27,7 @@ import org.scalatest.funsuite.AnyFunSuite // scalastyle:ignore funsuite
 
 import org.apache.spark.internal.{LogEntry, Logging, MDC}
 import org.apache.spark.internal.LogKey.{EXECUTOR_ID, MAX_SIZE, MIN_SIZE}
+import org.apache.spark.internal.MDC._
 
 trait LoggingSuiteBase
     extends AnyFunSuite // scalastyle:ignore funsuite
@@ -62,6 +63,12 @@ trait LoggingSuiteBase
     log"Max Size: ${MDC(MAX_SIZE, "4")}. " +
     log"Please double check."
 
+  def concatMDCAndString: LogEntry = log"Lost executor ${MDC(EXECUTOR_ID, "1")}." ++
+    s" Hello $basicMsg."
+
+  def concatStringAndMDC: LogEntry = s"Hello $basicMsg, " ++
+    log"Lost executor ${MDC(EXECUTOR_ID, "1")}."
+
   // test for basic message (without any mdc)
   def expectedPatternForBasicMsg(level: Level): String
 
@@ -74,6 +81,13 @@ trait LoggingSuiteBase
   // test for message and exception
   def expectedPatternForMsgWithMDCAndException(level: Level): String
 
+  // test for concat string and MDC
+  def expectedPatternForConcatStringAndMDC(level: Level): String
+
+  // test for concat MDC and string
+  def expectedPatternForConcatMDCAndString(level: Level): String
+
+  // test for concat MDC and MDC
   def verifyMsgWithConcat(level: Level, logOutput: String): Unit
 
   test("Basic logging") {
@@ -128,6 +142,28 @@ trait LoggingSuiteBase
         case (level, logFunc) =>
           val logOutput = captureLogOutput(logFunc)
           verifyMsgWithConcat(level, logOutput)
+      }
+  }
+
+  test("Logging concat string and MDC") {
+    Seq(
+      (Level.ERROR, () => logError(concatStringAndMDC)),
+      (Level.WARN, () => logWarning(concatStringAndMDC)),
+      (Level.INFO, () => logInfo(concatStringAndMDC))).foreach {
+        case (level, logFunc) =>
+          val logOutput = captureLogOutput(logFunc)
+          assert(expectedPatternForConcatStringAndMDC(level).r.matches(logOutput))
+      }
+  }
+
+  test("Logging concat MDC and string") {
+    Seq(
+      (Level.ERROR, () => logError(concatMDCAndString)),
+      (Level.WARN, () => logWarning(concatMDCAndString)),
+      (Level.INFO, () => logInfo(concatMDCAndString))).foreach {
+        case (level, logFunc) =>
+          val logOutput = captureLogOutput(logFunc)
+          assert(expectedPatternForConcatMDCAndString(level).r.matches(logOutput))
       }
   }
 }
@@ -199,6 +235,34 @@ class StructuredLoggingSuite extends LoggingSuiteBase {
             "class": "java.lang.RuntimeException",
             "msg": "OOM",
             "stacktrace": "<stacktrace>"
+          },
+          "logger": "$className"
+        }""")
+  }
+
+  override def expectedPatternForConcatStringAndMDC(level: Level): String = {
+    compactAndToRegexPattern(
+      s"""
+        {
+          "ts": "<timestamp>",
+          "level": "$level",
+          "msg": "Hello This is a log message, Lost executor 1.",
+          "context": {
+             "executor_id": "1"
+          },
+          "logger": "$className"
+        }""")
+  }
+
+  override def expectedPatternForConcatMDCAndString(level: Level): String = {
+    compactAndToRegexPattern(
+      s"""
+        {
+          "ts": "<timestamp>",
+          "level": "$level",
+          "msg": "Lost executor 1. Hello This is a log message.",
+          "context": {
+             "executor_id": "1"
           },
           "logger": "$className"
         }""")
