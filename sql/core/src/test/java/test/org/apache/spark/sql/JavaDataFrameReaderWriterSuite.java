@@ -45,6 +45,7 @@ public class JavaDataFrameReaderWriterSuite {
 
   @AfterEach
   public void tearDown() {
+    Utils.deleteRecursively(new File(input));
     spark.stop();
     spark = null;
   }
@@ -71,7 +72,8 @@ public class JavaDataFrameReaderWriterSuite {
         .option("c", 1.0)
         .option("d", true)
         .options(map)
-        .text()
+        .schema(schema)
+        .text(input)
         .write()
         .option("a", "1")
         .option("b", 1)
@@ -97,24 +99,22 @@ public class JavaDataFrameReaderWriterSuite {
     spark.read().format("org.apache.spark.sql.test").load();
     spark.read().format("org.apache.spark.sql.test").load(input);
     spark.read().format("org.apache.spark.sql.test").load(input, input, input);
-    spark.read().format("org.apache.spark.sql.test").load(new String[]{input, input});
+    spark.read().format("org.apache.spark.sql.test").load(new String[] {input, input});
   }
 
   @Test
   public void testTextAPI() {
-    spark.read().text();
-    spark.read().text(input);
-    spark.read().text(input, input, input);
-    spark.read().text(new String[]{input, input})
+    spark.read().schema(schema).text(input);
+    spark.read().schema(schema).text(input, input, input);
+    spark.read().schema(schema).text(new String[] {input, input})
         .write().text(output);
   }
 
   @Test
   public void testTextFileAPI() {
-    spark.read().textFile();
     spark.read().textFile(input);
     spark.read().textFile(input, input, input);
-    spark.read().textFile(new String[]{input, input});
+    spark.read().textFile(new String[] {input, input});
   }
 
   @Test
@@ -122,7 +122,7 @@ public class JavaDataFrameReaderWriterSuite {
     spark.read().schema(schema).csv();
     spark.read().schema(schema).csv(input);
     spark.read().schema(schema).csv(input, input, input);
-    spark.read().schema(schema).csv(new String[]{input, input})
+    spark.read().schema(schema).csv(new String[] {input, input})
         .write().csv(output);
   }
 
@@ -131,7 +131,7 @@ public class JavaDataFrameReaderWriterSuite {
     spark.read().schema(schema).json();
     spark.read().schema(schema).json(input);
     spark.read().schema(schema).json(input, input, input);
-    spark.read().schema(schema).json(new String[]{input, input})
+    spark.read().schema(schema).json(new String[] {input, input})
         .write().json(output);
   }
 
@@ -152,7 +152,7 @@ public class JavaDataFrameReaderWriterSuite {
     spark.read().schema(schema).orc();
     spark.read().schema(schema).orc(input);
     spark.read().schema(schema).orc(input, input, input);
-    spark.read().schema(schema).orc(new String[]{input, input})
+    spark.read().schema(schema).orc(new String[] {input, input})
         .write().orc(output);
   }
 }

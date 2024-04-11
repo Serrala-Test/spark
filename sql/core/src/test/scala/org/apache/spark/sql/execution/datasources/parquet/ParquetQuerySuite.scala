@@ -1150,6 +1150,24 @@ abstract class ParquetQuerySuite extends QueryTest with ParquetTest with SharedS
       checkAnswer(df, expected)
     }
   }
+
+  test("SPARK-47649: the parameter `inputs` of the function `parquet(paths: String*)` non empty " +
+    "when not explicitly specify the schema") {
+    checkError(
+      exception = intercept[AnalysisException] {
+        spark.read.parquet().collect()
+      },
+      errorClass = "UNABLE_TO_INFER_SCHEMA",
+      parameters = Map("format" -> "Parquet")
+    )
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `parquet(paths: String*)` can empty " +
+    "when explicitly specify the schema") {
+    val schema = StructType(Seq(StructField("column", StringType)))
+    val df = spark.read.schema(schema).parquet()
+    checkAnswer(df, spark.emptyDataFrame)
+  }
 }
 
 class ParquetV1QuerySuite extends ParquetQuerySuite {

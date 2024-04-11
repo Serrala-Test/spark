@@ -3000,6 +3000,24 @@ class XmlSuite
       }
     }
   }
+
+  test("SPARK-47649: the parameter `inputs` of the function `xml(paths: String*)` non empty " +
+    "when not explicitly specify the schema") {
+    checkError(
+      exception = intercept[AnalysisException] {
+        spark.read.option("rowTag", "ROW").xml().collect()
+      },
+      errorClass = "UNABLE_TO_INFER_SCHEMA",
+      parameters = Map("format" -> "XML")
+    )
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `xml(paths: String*)` can empty " +
+    "when explicitly specify the schema") {
+    val schema = StructType(Seq(StructField("column", StringType)))
+    val df = spark.read.schema(schema).option("rowTag", "ROW").xml()
+    checkAnswer(df, spark.emptyDataFrame)
+  }
 }
 
 // Mock file system that checks the number of open files

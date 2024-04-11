@@ -660,7 +660,7 @@ class DataFrameReader private[sql](sparkSession: SparkSession) extends Logging {
    * @since 2.0.0
    */
   @scala.annotation.varargs
-  def orc(paths: String*): DataFrame = format("orc").load(paths: _*)
+  def orc(paths: String*): DataFrame = format("orc").load(paths : _*)
 
   /**
    * Returns the specified table/view as a `DataFrame`. If it's a table, it must support batch
@@ -717,7 +717,12 @@ class DataFrameReader private[sql](sparkSession: SparkSession) extends Logging {
    * @since 1.6.0
    */
   @scala.annotation.varargs
-  def text(paths: String*): DataFrame = format("text").load(paths : _*)
+  def text(paths: String*): DataFrame = {
+    if (userSpecifiedSchema.isEmpty && paths.isEmpty) {
+      throw QueryCompilationErrors.dataSchemaNotSpecifiedError("Text")
+    }
+    format("text").load(paths : _*)
+  }
 
   /**
    * Loads text files and returns a [[Dataset]] of String. See the documentation on the
@@ -754,7 +759,8 @@ class DataFrameReader private[sql](sparkSession: SparkSession) extends Logging {
   @scala.annotation.varargs
   def textFile(paths: String*): Dataset[String] = {
     assertNoSpecifiedSchema("textFile")
-    text(paths : _*).select("value").as[String](sparkSession.implicits.newStringEncoder)
+    format("text").load(paths : _*).select("value").
+      as[String](sparkSession.implicits.newStringEncoder)
   }
 
   /**

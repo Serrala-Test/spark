@@ -30,7 +30,7 @@ import org.apache.spark.sql.catalyst.util.HadoopCompressionCodec.{BZIP2, DEFLATE
 import org.apache.spark.sql.execution.datasources.CommonFileDataSourceSuite
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{StringType, StructType}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.util.Utils
 
 abstract class TextSuite extends QueryTest with SharedSparkSession with CommonFileDataSourceSuite {
@@ -252,6 +252,24 @@ abstract class TextSuite extends QueryTest with SharedSparkSession with CommonFi
     assert(TextOptions.isValidOption("wholetext"))
     assert(TextOptions.isValidOption("encoding"))
     assert(TextOptions.isValidOption("lineSep"))
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `text(paths: String*)` non empty " +
+    "when not explicitly specify the schema") {
+    checkError(
+      exception = intercept[AnalysisException] {
+        spark.read.text().collect()
+      },
+      errorClass = "UNABLE_TO_INFER_SCHEMA",
+      parameters = Map("format" -> "Text")
+    )
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `text(paths: String*)` can empty " +
+    "when explicitly specify the schema") {
+    val schema = StructType(Seq(StructField("column", StringType)))
+    val df = spark.read.schema(schema).text()
+    checkAnswer(df, spark.emptyDataFrame)
   }
 }
 

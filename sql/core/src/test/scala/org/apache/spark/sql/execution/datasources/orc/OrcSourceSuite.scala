@@ -34,7 +34,7 @@ import org.apache.orc.impl.RecordReaderImpl
 import org.scalatest.BeforeAndAfterAll
 
 import org.apache.spark.{SPARK_VERSION_SHORT, SparkConf, SparkException}
-import org.apache.spark.sql.{Row, SPARK_VERSION_METADATA_KEY}
+import org.apache.spark.sql.{AnalysisException, Row, SPARK_VERSION_METADATA_KEY}
 import org.apache.spark.sql.execution.datasources.{CommonFileDataSourceSuite, SchemaMergeUtils}
 import org.apache.spark.sql.execution.datasources.orc.OrcCompressionCodec._
 import org.apache.spark.sql.internal.SQLConf
@@ -591,6 +591,24 @@ abstract class OrcSuite
     assert(OrcOptions.isValidOption("mergeSchema"))
     assert(OrcOptions.isValidOption("orc.compress"))
     assert(OrcOptions.isValidOption("compression"))
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `orc(paths: String*)` non empty " +
+    "when not explicitly specify the schema") {
+    checkError(
+      exception = intercept[AnalysisException] {
+        spark.read.orc().collect()
+      },
+      errorClass = "UNABLE_TO_INFER_SCHEMA",
+      parameters = Map("format" -> "ORC")
+    )
+  }
+
+  test("SPARK-47649: the parameter `inputs` of the function `orc(paths: String*)` can empty " +
+    "when explicitly specify the schema") {
+    val schema = StructType(Seq(StructField("column", StringType)))
+    val df = spark.read.schema(schema).orc()
+    checkAnswer(df, spark.emptyDataFrame)
   }
 }
 
