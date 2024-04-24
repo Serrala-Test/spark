@@ -385,13 +385,17 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   }
 
   private UTF8String toUpperCaseSlow() {
+    // checkstyle.off: RegexpSinglelineJava
     return fromString(toString().toUpperCase());
+    // checkstyle.on: RegexpSinglelineJava
   }
 
+  // checkstyle.off: RegexpSinglelineJava
   /**
    * Optimized lowercase comparison for UTF8_BINARY_LCASE collation
    * a.compareLowerCase(b) is equivalent to a.toLowerCase().binaryCompare(b.toLowerCase())
    */
+  // checkstyle.on: RegexpSinglelineJava
   public int compareLowerCase(UTF8String other) {
     int curr;
     for (curr = 0; curr < numBytes && curr < other.numBytes; curr++) {
@@ -438,7 +442,9 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   }
 
   private UTF8String toLowerCaseSlow() {
+    // checkstyle.off: RegexpSinglelineJava
     return fromString(toString().toLowerCase());
+    // checkstyle.on: RegexpSinglelineJava
   }
 
   /**

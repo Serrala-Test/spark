@@ -60,7 +60,9 @@ public final class CollationSupport {
       return l.contains(r);
     }
     public static boolean execLowercase(final UTF8String l, final UTF8String r) {
+      // checkstyle.off: RegexpSinglelineJava
       return l.toLowerCase().contains(r.toLowerCase());
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static boolean execICU(final UTF8String l, final UTF8String r,
         final int collationId) {
@@ -98,7 +100,9 @@ public final class CollationSupport {
       return l.startsWith(r);
     }
     public static boolean execLowercase(final UTF8String l, final UTF8String r) {
+      // checkstyle.off: RegexpSinglelineJava
       return l.toLowerCase().startsWith(r.toLowerCase());
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static boolean execICU(final UTF8String l, final UTF8String r,
         final int collationId) {
@@ -135,7 +139,9 @@ public final class CollationSupport {
       return l.endsWith(r);
     }
     public static boolean execLowercase(final UTF8String l, final UTF8String r) {
+      // checkstyle.off: RegexpSinglelineJava
       return l.toLowerCase().endsWith(r.toLowerCase());
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static boolean execICU(final UTF8String l, final UTF8String r,
         final int collationId) {
@@ -166,7 +172,9 @@ public final class CollationSupport {
       }
     }
     public static UTF8String execUTF8(final UTF8String v) {
+      // checkstyle.off: RegexpSinglelineJava
       return v.toUpperCase();
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static UTF8String execICU(final UTF8String v, final int collationId) {
       return UTF8String.fromString(CollationAwareUTF8String.toUpperCase(v.toString(), collationId));
@@ -192,7 +200,9 @@ public final class CollationSupport {
       }
     }
     public static UTF8String execUTF8(final UTF8String v) {
+      // checkstyle.off: RegexpSinglelineJava
       return v.toLowerCase();
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static UTF8String execICU(final UTF8String v, final int collationId) {
       return UTF8String.fromString(CollationAwareUTF8String.toLowerCase(v.toString(), collationId));
@@ -220,7 +230,9 @@ public final class CollationSupport {
     }
 
     public static UTF8String execUTF8(final UTF8String v) {
+      // checkstyle.off: RegexpSinglelineJava
       return v.toLowerCase().toTitleCase();
+      // checkstyle.on: RegexpSinglelineJava
     }
 
     public static UTF8String execICU(final UTF8String v, final int collationId) {
@@ -260,7 +272,9 @@ public final class CollationSupport {
       return set.findInSet(word);
     }
     public static int execLowercase(final UTF8String word, final UTF8String set) {
+      // checkstyle.off: RegexpSinglelineJava
       return set.toLowerCase().findInSet(word.toLowerCase());
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static int execICU(final UTF8String word, final UTF8String set,
                                   final int collationId) {
@@ -296,7 +310,9 @@ public final class CollationSupport {
       return string.indexOf(substring, 0);
     }
     public static int execLowercase(final UTF8String string, final UTF8String substring) {
+      // checkstyle.off: RegexpSinglelineJava
       return string.toLowerCase().indexOf(substring.toLowerCase(), 0);
+      // checkstyle.on: RegexpSinglelineJava
     }
     public static int execICU(final UTF8String string, final UTF8String substring,
         final int collationId) {
