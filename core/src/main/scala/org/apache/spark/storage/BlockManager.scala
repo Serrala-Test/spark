@@ -43,7 +43,7 @@ import org.apache.spark.errors.SparkCoreErrors
 import org.apache.spark.executor.DataReadMethod
 import org.apache.spark.internal.{config, Logging, MDC}
 import org.apache.spark.internal.LogKey.{BLOCK_ID, COUNT, SLEEP_TIME}
-import org.apache.spark.internal.config.{Network, RDD_CACHE_VISIBILITY_TRACKING_ENABLED, Tests}
+import org.apache.spark.internal.config.{RDD_CACHE_VISIBILITY_TRACKING_ENABLED, Tests}
 import org.apache.spark.memory.{MemoryManager, MemoryMode}
 import org.apache.spark.metrics.source.Source
 import org.apache.spark.network._
@@ -207,9 +207,6 @@ private[spark] class BlockManager(
   // same as `conf.get(config.SHUFFLE_SERVICE_ENABLED)`
   private[spark] val externalShuffleServiceEnabled: Boolean = externalBlockStoreClient.isDefined
   private val isDriver = executorId == SparkContext.DRIVER_IDENTIFIER
-
-  private val remoteReadNioBufferConversion =
-    conf.get(Network.NETWORK_REMOTE_READ_NIO_BUFFER_CONVERSION)
 
   private[spark] val subDirsPerLocalDir = conf.get(config.DISKSTORE_SUB_DIRECTORIES)
 
@@ -1284,16 +1281,7 @@ private[spark] class BlockManager(
    * Get block from remote block managers as serialized bytes.
    */
   def getRemoteBytes(blockId: BlockId): Option[ChunkedByteBuffer] = {
-    getRemoteBlock(blockId, (data: ManagedBuffer) => {
-      // SPARK-24307 undocumented "escape-hatch" in case there are any issues in converting to
-      // ChunkedByteBuffer, to go back to old code-path.  Can be removed post Spark 2.4 if
-      // new path is stable.
-      if (remoteReadNioBufferConversion) {
-        new ChunkedByteBuffer(data.nioByteBuffer())
-      } else {
-        ChunkedByteBuffer.fromManagedBuffer(data)
-      }
-    })
+    getRemoteBlock(blockId, (data: ManagedBuffer) => ChunkedByteBuffer.fromManagedBuffer(data))
   }
 
   /**
