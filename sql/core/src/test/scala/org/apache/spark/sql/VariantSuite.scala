@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import scala.collection.mutable
+import scala.io.Source
 import scala.jdk.CollectionConverters._
 import scala.util.Random
 
@@ -443,6 +444,23 @@ class VariantSuite extends QueryTest with SharedSparkSession {
         check("""[null, "hello", {}]""",
           Seq(Row(0, null, "null"), Row(1, null, "\"hello\""), Row(2, null, "{}")))
       }
+    }
+  }
+
+  // These tests read from tables written by other engines to ensure that Spark is compatible.
+  // The golden tables were written using "variant-table.sql" so running this SQL file in
+  // Spark should yield the same results as the golden tables.
+  Seq("variant-writer-one-parquet", "variant-writer-two-parquet").foreach { tableName =>
+    test(s"read variant table written by different writer - $tableName") {
+      val sqlPath = Thread.currentThread().getContextClassLoader
+          .getResource("test-data/variant/variant-table.sql").getPath.toString
+      val query = Source.fromFile(sqlPath).mkString
+      val actualDf = spark.sql(query)
+
+      val tablePath = Thread.currentThread().getContextClassLoader
+          .getResource(s"test-data/variant/$tableName").getPath.toString
+      val expected = spark.read.format("parquet").load(tablePath).collect()
+      checkAnswer(actualDf, expected)
     }
   }
 }
