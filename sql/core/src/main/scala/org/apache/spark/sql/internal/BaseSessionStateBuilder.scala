@@ -225,6 +225,7 @@ abstract class BaseSessionStateBuilder(
         CommandCheck +:
         CollationCheck +:
         ViewSyncSchemaToMetaStore +:
+        IndeterminateCheck +:
         customCheckRules
   }
 

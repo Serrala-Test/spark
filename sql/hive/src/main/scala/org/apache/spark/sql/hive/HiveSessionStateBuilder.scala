@@ -115,6 +115,7 @@ class HiveSessionStateBuilder(
         CommandCheck +:
         CollationCheck +:
         ViewSyncSchemaToMetaStore +:
+        IndeterminateCheck +:
         customCheckRules
   }
 

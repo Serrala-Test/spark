@@ -29,13 +29,13 @@ import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.TypeUtils._
 import org.apache.spark.sql.connector.expressions.{FieldReference, RewritableTransform}
 import org.apache.spark.sql.errors.QueryCompilationErrors
-import org.apache.spark.sql.execution.command.DDLUtils
+import org.apache.spark.sql.execution.command.{CreateDataSourceTableAsSelectCommand, CreateViewCommand, DDLUtils}
 import org.apache.spark.sql.execution.command.ViewHelper.generateViewProperties
 import org.apache.spark.sql.execution.datasources.{CreateTable => CreateTableV1}
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.sources.InsertableRelation
-import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.util.PartitioningUtils.normalizePartitionSpec
 import org.apache.spark.sql.util.SchemaUtils
 import org.apache.spark.util.ArrayImplicits._
@@ -680,6 +680,26 @@ object ViewSyncSchemaToMetaStore extends (LogicalPlan => Unit) {
           session.sessionState.catalog.alterTable(updatedViewMeta)
         }
       case _ => // OK
+    }
+  }
+}
+
+object IndeterminateCheck extends (LogicalPlan => Unit) {
+  def apply(plan: LogicalPlan): Unit = {
+    plan match {
+      case CreateDataSourceTableAsSelectCommand(_, _, query, _) if query.resolved =>
+        if (query.schema.exists(sf => sf.dataType == StringType(-1))) {
+          throw QueryCompilationErrors.indeterminateCollationError()
+        }
+      case CreateViewCommand(_, _, _, _, _, plan, _, _, _, _, _, _) if plan.resolved =>
+        if (plan.schema.exists(sf => sf.dataType == StringType(-1))) {
+          throw QueryCompilationErrors.indeterminateCollationError()
+        }
+      case Sort(order, _, child) if child.resolved =>
+        if (order.exists(sf => sf.dataType == StringType(-1))) {
+          throw QueryCompilationErrors.indeterminateCollationError()
+        }
+      case _ => ()
     }
   }
 }

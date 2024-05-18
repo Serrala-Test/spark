@@ -23,6 +23,7 @@ import scala.annotation.tailrec
 
 import org.apache.spark.sql.catalyst.analysis.TypeCoercion.{hasStringType, haveSameType}
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.util.CollationFactory
 import org.apache.spark.sql.errors.QueryCompilationErrors
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{ArrayType, DataType, StringType}
@@ -37,7 +38,9 @@ object CollationTypeCasts extends TypeCoercionRule {
 
     case caseWhenExpr: CaseWhen if !haveSameType(caseWhenExpr.inputTypesForMerging) =>
       val outputStringType =
-        getOutputCollation(caseWhenExpr.branches.map(_._2) ++ caseWhenExpr.elseValue)
+        getOutputCollation(
+          caseWhenExpr.branches.map(_._2) ++ caseWhenExpr.elseValue,
+          failOnIndeterminate = true)
         val newBranches = caseWhenExpr.branches.map { case (condition, value) =>
           (condition, castStringType(value, outputStringType).getOrElse(value))
         }
@@ -71,10 +74,14 @@ object CollationTypeCasts extends TypeCoercionRule {
       val Seq(newStr, newPad) = collateToSingleType(Seq(str, pad))
       stringPadExpr.withNewChildren(Seq(newStr, len, newPad))
 
+    case concatExprs @ (_: Concat | _: ConcatWs) =>
+      val newChildren = collateToSingleType(concatExprs.children, failOnIndeterminate = false)
+      concatExprs.withNewChildren(newChildren)
+
     case otherExpr @ (
-      _: In | _: InSubquery | _: CreateArray | _: ArrayJoin | _: Concat | _: Greatest | _: Least |
-      _: Coalesce | _: BinaryExpression | _: ConcatWs | _: Mask | _: StringReplace |
-      _: StringTranslate | _: StringTrim | _: StringTrimLeft | _: StringTrimRight) =>
+      _: In | _: InSubquery | _: CreateArray | _: ArrayJoin | _: Greatest | _: Least | _: Coalesce |
+      _: BinaryExpression | _: Mask | _: StringReplace | _: StringTranslate | _: StringTrim |
+      _: StringTrimLeft | _: StringTrimRight) =>
       val newChildren = collateToSingleType(otherExpr.children)
       otherExpr.withNewChildren(newChildren)
   }
@@ -110,8 +117,10 @@ object CollationTypeCasts extends TypeCoercionRule {
   /**
    * Collates input expressions to a single collation.
    */
-  def collateToSingleType(exprs: Seq[Expression]): Seq[Expression] = {
-    val st = getOutputCollation(exprs)
+  def collateToSingleType(
+      exprs: Seq[Expression],
+      failOnIndeterminate: Boolean = true): Seq[Expression] = {
+    val st = getOutputCollation(exprs, failOnIndeterminate)
 
     exprs.map(e => castStringType(e, st).getOrElse(e))
   }
@@ -122,7 +131,7 @@ object CollationTypeCasts extends TypeCoercionRule {
    * any expressions, but will only be affected by collated StringTypes or
    * complex DataTypes with collated StringTypes (e.g. ArrayType)
    */
-  def getOutputCollation(expr: Seq[Expression]): StringType = {
+  def getOutputCollation(expr: Seq[Expression], failOnIndeterminate: Boolean): StringType = {
     val explicitTypes = expr.filter {
         case _: Collate => true
         case cast: Cast if cast.getTagValue(Cast.USER_SPECIFIED_CAST).isDefined =>
@@ -155,7 +164,20 @@ object CollationTypeCasts extends TypeCoercionRule {
           .distinct
 
         if (implicitTypes.length > 1) {
-          throw QueryCompilationErrors.implicitCollationMismatchError()
+          if (failOnIndeterminate) {
+            throw QueryCompilationErrors.implicitCollationMismatchError()
+          }
+          else {
+            StringType(CollationFactory.INDETERMINATE_COLLATION_ID)
+          }
+        }
+        else if (implicitTypes.contains(-1)) {
+          if (failOnIndeterminate) {
+            throw QueryCompilationErrors.indeterminateCollationError()
+          }
+          else {
+            StringType(CollationFactory.INDETERMINATE_COLLATION_ID)
+          }
         }
         else {
           implicitTypes.headOption.map(StringType(_)).getOrElse(SQLConf.get.defaultStringType)
