@@ -861,9 +861,18 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           .add("z", IntegerType))
         .add("b", IntegerType))
 
-      val e1 = intercept[AnalysisException](
-        sql(s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist"))
-      assert(e1.getMessage.contains("Missing field non_exist"))
+      checkError(
+        exception = intercept[AnalysisException] {
+          sql(s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist"))
+        },
+        errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
+        sqlState = "42703",
+        parameters = Map(
+          "objectName" -> "`non_exist`",
+          "tableName" -> toSQLId(t),
+          "proposal" -> "`a`, `point`, `b`"
+        )
+      )
 
       sql(s"ALTER TABLE $t ALTER COLUMN point.y FIRST")
       assert(getTableMetadata(t).schema == new StructType()
