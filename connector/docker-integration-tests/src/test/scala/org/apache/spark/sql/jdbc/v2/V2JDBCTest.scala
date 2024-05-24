@@ -75,7 +75,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
       sqlState = "42703",
       parameters = Map(
         "objectName" -> "`bad_column`",
-        "tableName" -> s"`${catalogName}`.`alt_table`",
+        "tableName" -> s"`$catalogName`.`alt_table`",
         "proposal" -> "`ID`"
       )
     )
@@ -153,7 +153,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`bad_column`",
-          "tableName" -> s"`${catalogName}`.`alt_table`",
+          "tableName" -> s"`$catalogName`.`alt_table`",
           "proposal" -> "`C2`"
         )
       )
@@ -179,7 +179,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`bad_column`",
-          "tableName" -> s"`${catalogName}`.`alt_table`",
+          "tableName" -> s"`$catalogName`.`alt_table`",
           "proposal" -> "`ID`"
         )
       )
