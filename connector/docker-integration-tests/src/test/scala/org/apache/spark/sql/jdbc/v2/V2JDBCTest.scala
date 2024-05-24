@@ -77,7 +77,11 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
         "objectName" -> "`bad_column`",
         "tableName" -> s"`$catalogName`.`alt_table`",
         "proposal" -> "`ID`"
-      )
+      ),
+      context = ExpectedContext(
+        fragment = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL",
+        start = 0,
+        stop = 59 + catalogName.length)
     )
   }
 
@@ -155,7 +159,11 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
           "objectName" -> "`bad_column`",
           "tableName" -> s"`$catalogName`.`alt_table`",
           "proposal" -> "`C2`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $catalogName.alt_table DROP COLUMN bad_column",
+          start = 0,
+          stop = 44 + catalogName.length)
       )
     }
     // Drop a column from a not existing table
@@ -181,7 +189,11 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
           "objectName" -> "`bad_column`",
           "tableName" -> s"`$catalogName`.`alt_table`",
           "proposal" -> "`ID`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column TYPE DOUBLE",
+          start = 0,
+          stop = 57 + catalogName.length)
       )
     }
     // Update column type in not existing table
