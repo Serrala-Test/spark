@@ -1168,7 +1168,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
-      val sqlText = s"ALTER TABLE $t RENAME COLUMN point.x TO z")
+      val sqlText = s"ALTER TABLE $t RENAME COLUMN point.x TO z"
       checkError(
         exception = intercept[AnalysisException] {
           sql(sqlText)
