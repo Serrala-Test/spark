@@ -769,9 +769,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t ALTER COLUMN data TYPE string"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN data TYPE string")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -781,7 +782,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN data TYPE string",
+          fragment = sqlText,
           start = 0,
           stop = 41 + toSQLId(t).length)
       )
@@ -793,9 +794,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t ALTER COLUMN point.x TYPE double"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN point.x TYPE double")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -805,7 +807,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN point.x TYPE double",
+          fragment = sqlText,
           start = 0,
           stop = 44 + toSQLId(t).length)
       )
@@ -873,9 +875,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           .add("z", IntegerType))
         .add("b", IntegerType))
 
+      val sqlText1 = s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist")
+          sql(sqlText1)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -885,7 +888,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`a`, `point`, `b`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist",
+          fragment = sqlText1,
           start = 0,
           stop = 42 + toSQLId(t).length)
       )
@@ -908,9 +911,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           .add("y", IntegerType))
         .add("b", IntegerType))
 
+      val sqlText2 = s"ALTER TABLE $t ALTER COLUMN point.y AFTER non_exist"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN point.y AFTER non_exist")
+          sql(sqlText2)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -920,7 +924,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`a`, `point`, `b`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN point.y AFTER non_exist",
+          fragment = sqlText2,
           start = 0,
           stop = 48 + toSQLId(t).length)
       )
@@ -1006,9 +1010,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t ALTER COLUMN data COMMENT 'doc'"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN data COMMENT 'doc'")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1018,7 +1023,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN data COMMENT 'doc'",
+          fragment = sqlText,
           start = 0,
           stop = 43 + toSQLId(t).length)
       )
@@ -1030,9 +1035,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t ALTER COLUMN point.x COMMENT 'doc'"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN point.x COMMENT 'doc'")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1042,7 +1048,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ALTER COLUMN point.x COMMENT 'doc'",
+          fragment = sqlText,
           start = 0,
           stop = 46 + toSQLId(t).length)
       )
@@ -1137,9 +1143,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t RENAME COLUMN data TO some_string"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t RENAME COLUMN data TO some_string")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1149,7 +1156,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t RENAME COLUMN data TO some_string",
+          fragment = sqlText,
           start = 0,
           stop = 45 + toSQLId(t).length)
       )
@@ -1161,9 +1168,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t RENAME COLUMN point.x TO z")
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t RENAME COLUMN point.x TO z")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1173,7 +1181,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t RENAME COLUMN point.x TO z",
+          fragment = sqlText,
           start = 0,
           stop = 38 + toSQLId(t).length)
       )
@@ -1319,12 +1327,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
-      val exc = intercept[AnalysisException] {
-        sql(s"ALTER TABLE $t DROP COLUMN data")
-      }
+      val sqlText = s"ALTER TABLE $t DROP COLUMN data"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t DROP COLUMN data")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1334,7 +1340,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t DROP COLUMN data",
+          fragment = sqlText,
           start = 0,
           stop = 28 + toSQLId(t).length)
       )
@@ -1351,9 +1357,10 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t DROP COLUMN point.x"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t DROP COLUMN point.x")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -1363,7 +1370,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t DROP COLUMN point.x",
+          fragment = sqlText,
           start = 0,
           stop = 31 + toSQLId(t).length)
       )

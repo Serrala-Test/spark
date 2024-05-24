@@ -68,8 +68,9 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
     assert(t.schema === expectedSchema)
     // Update nullability of not existing column
     checkError(
+      val sqlText = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL"
       exception = intercept[AnalysisException] {
-        sql(s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL")
+        sql(sqlText)
       },
       errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
       sqlState = "42703",
@@ -79,7 +80,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
         "proposal" -> "`ID`"
       ),
       context = ExpectedContext(
-        fragment = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL",
+        fragment = sqlText,
         start = 0,
         stop = 59 + catalogName.length)
     )
@@ -149,9 +150,10 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
         .add("C2", StringType, true, defaultMetadata())
       assert(t.schema === expectedSchema)
       // Drop not existing column
+      val sqlText = s"ALTER TABLE $catalogName.alt_table DROP COLUMN bad_column"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $catalogName.alt_table DROP COLUMN bad_column")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -161,7 +163,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
           "proposal" -> "`C2`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $catalogName.alt_table DROP COLUMN bad_column",
+          fragment = sqlText,
           start = 0,
           stop = 44 + catalogName.length)
       )
@@ -179,9 +181,10 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
     withTable(s"$catalogName.alt_table") {
       testUpdateColumnType(s"$catalogName.alt_table")
       // Update not existing column
+      val sqlText = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column TYPE DOUBLE"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column TYPE DOUBLE")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
@@ -191,7 +194,7 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
           "proposal" -> "`ID`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column TYPE DOUBLE",
+          fragment = sqlText,
           start = 0,
           stop = 57 + catalogName.length)
       )
