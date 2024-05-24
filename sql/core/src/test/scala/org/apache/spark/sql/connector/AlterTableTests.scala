@@ -863,7 +863,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
 
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist"))
+          sql(s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist")
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
