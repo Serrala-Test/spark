@@ -446,7 +446,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = s"ALTER TABLE $t ADD COLUMN point.z double",
           start = 0,
-          stop = 37 + toSQLId(t).length)
+          stop = 37 + t.length)
       )
     }
   }
@@ -784,7 +784,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 41 + toSQLId(t).length)
+          stop = 41 + t.length)
       )
     }
   }
@@ -809,7 +809,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 44 + toSQLId(t).length)
+          stop = 44 + t.length)
       )
     }
   }
@@ -890,7 +890,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText1,
           start = 0,
-          stop = 42 + toSQLId(t).length)
+          stop = 42 + t.length)
       )
 
       sql(s"ALTER TABLE $t ALTER COLUMN point.y FIRST")
@@ -926,7 +926,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText2,
           start = 0,
-          stop = 48 + toSQLId(t).length)
+          stop = 48 + t.length)
       )
 
       // `AlterTable.resolved` checks column existence.
@@ -1025,7 +1025,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 43 + toSQLId(t).length)
+          stop = 43 + t.length)
       )
     }
   }
@@ -1050,7 +1050,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 46 + toSQLId(t).length)
+          stop = 46 + t.length)
       )
     }
   }
@@ -1158,7 +1158,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 45 + toSQLId(t).length)
+          stop = 45 + t.length)
       )
     }
   }
@@ -1183,7 +1183,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 38 + toSQLId(t).length)
+          stop = 38 + t.length)
       )
     }
   }
@@ -1342,7 +1342,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 28 + toSQLId(t).length)
+          stop = 28 + t.length)
       )
 
       // with if exists it should pass
