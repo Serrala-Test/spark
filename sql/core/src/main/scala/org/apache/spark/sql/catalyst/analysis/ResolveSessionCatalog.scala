@@ -77,7 +77,7 @@ class ResolveSessionCatalog(val catalogManager: CatalogManager)
       }
       if (a.nullable.isDefined) {
         throw QueryCompilationErrors.unsupportedTableOperationError(
-          catalog, ident, "ALTER COLUMN specify NOT NULL")
+          catalog, ident, "ALTER COLUMN ... SET NOT NULL")
       }
       if (a.position.isDefined) {
         throw QueryCompilationErrors.unsupportedTableOperationError(

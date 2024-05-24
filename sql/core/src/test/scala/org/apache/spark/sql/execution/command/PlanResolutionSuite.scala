@@ -1360,7 +1360,7 @@ class PlanResolutionSuite extends AnalysisTest {
             errorClass = "UNSUPPORTED_FEATURE.TABLE_OPERATION",
             sqlState = "0A000",
             parameters = Map("tableName" -> "`spark_catalog`.`default`.`v1Table`",
-              "operation" -> "ALTER COLUMN specify NOT NULL"))
+              "operation" -> "ALTER COLUMN ... SET NOT NULL"))
         } else {
           parsed1 match {
             case AlterColumn(
