@@ -67,8 +67,8 @@ private[v2] trait V2JDBCTest extends SharedSparkSession with DockerIntegrationFu
     expectedSchema = new StructType().add("ID", StringType, true, defaultMetadata())
     assert(t.schema === expectedSchema)
     // Update nullability of not existing column
+    val sqlText = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL"
     checkError(
-      val sqlText = s"ALTER TABLE $catalogName.alt_table ALTER COLUMN bad_column DROP NOT NULL"
       exception = intercept[AnalysisException] {
         sql(sqlText)
       },
