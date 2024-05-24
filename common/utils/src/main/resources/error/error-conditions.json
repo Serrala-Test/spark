@@ -4069,6 +4069,11 @@
         "message" : [
           "Did you mean one of the following? [<proposal>]."
         ]
+      },
+      "WITH_SUGGESTION_AND_TABLE" : {
+        "message" : [
+          "Did you mean one of the following in table <tableName>? [<proposal>]."
+        ]
       }
     },
     "sqlState" : "42703"
@@ -6143,12 +6148,6 @@
   "_LEGACY_ERROR_TEMP_1330" : {
     "message" : [
       "Class <className> doesn't implement interface UserDefinedAggregateFunction."
-    ]
-  },
-  "_LEGACY_ERROR_TEMP_1331" : {
-    "message" : [
-      "Missing field <fieldName> in table <table> with schema:",
-      "<schema>."
     ]
   },
   "_LEGACY_ERROR_TEMP_1332" : {
