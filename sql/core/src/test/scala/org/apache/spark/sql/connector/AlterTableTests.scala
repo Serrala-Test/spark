@@ -442,7 +442,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`point`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ADD COLUMN point.z double",
+          start = 0,
+          stop = 37 + toSQLId(t).length)
       )
     }
   }
@@ -775,7 +779,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`data`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN data TYPE string",
+          start = 0,
+          stop = 41 + toSQLId(t).length)
       )
     }
   }
@@ -795,7 +803,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN point.x TYPE double",
+          start = 0,
+          stop = 44 + toSQLId(t).length)
       )
     }
   }
@@ -871,7 +883,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`non_exist`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`a`, `point`, `b`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN b AFTER non_exist",
+          start = 0,
+          stop = 42 + toSQLId(t).length)
       )
 
       sql(s"ALTER TABLE $t ALTER COLUMN point.y FIRST")
@@ -902,7 +918,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`non_exist`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`a`, `point`, `b`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN point.y AFTER non_exist",
+          start = 0,
+          stop = 48 + toSQLId(t).length)
       )
 
       // `AlterTable.resolved` checks column existence.
@@ -996,7 +1016,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`data`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN data COMMENT 'doc'",
+          start = 0,
+          stop = 43 + toSQLId(t).length)
       )
     }
   }
@@ -1016,7 +1040,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t ALTER COLUMN point.x COMMENT 'doc'",
+          start = 0,
+          stop = 46 + toSQLId(t).length)
       )
     }
   }
@@ -1119,7 +1147,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`data`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t RENAME COLUMN data TO some_string",
+          start = 0,
+          stop = 45 + toSQLId(t).length)
       )
     }
   }
@@ -1139,7 +1171,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t RENAME COLUMN point.x TO z",
+          start = 0,
+          stop = 38 + toSQLId(t).length)
       )
     }
   }
@@ -1296,7 +1332,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`data`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t DROP COLUMN data",
+          start = 0,
+          stop = 28 + toSQLId(t).length)
       )
 
       // with if exists it should pass
@@ -1321,7 +1361,11 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
           "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
-        )
+        ),
+        context = ExpectedContext(
+          fragment = s"ALTER TABLE $t DROP COLUMN point.x",
+          start = 0,
+          stop = 31 + toSQLId(t).length)
       )
 
       // with if exists it should pass
