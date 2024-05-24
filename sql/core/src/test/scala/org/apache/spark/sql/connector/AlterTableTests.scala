@@ -432,20 +432,21 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
+      val sqlText = s"ALTER TABLE $t ADD COLUMN point.z double"
       checkError(
         exception = intercept[AnalysisException] {
-          sql(s"ALTER TABLE $t ADD COLUMN point.z double")
+          sql(sqlText)
         },
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`point`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
-          fragment = s"ALTER TABLE $t ADD COLUMN point.z double",
-          start = 0,
+          fragment = "point.z double",
+          start = 24 + t.length,
           stop = 37 + t.length)
       )
     }
@@ -778,7 +779,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`data`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -803,7 +804,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`point`.`x`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -884,7 +885,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`non_exist`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`a`, `point`, `b`"
         ),
         context = ExpectedContext(
@@ -919,8 +920,8 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
         parameters = Map(
-          "objectName" -> "`non_exist`",
-          "tableName" -> toSQLId(t),
+          "objectName" -> "`point`.`non_exist`",
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`a`, `point`, `b`"
         ),
         context = ExpectedContext(
@@ -1019,7 +1020,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`data`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -1044,7 +1045,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`point`.`x`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -1152,7 +1153,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`data`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -1177,7 +1178,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`point`.`x`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -1336,7 +1337,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`data`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
@@ -1366,13 +1367,13 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         sqlState = "42703",
         parameters = Map(
           "objectName" -> "`point`.`x`",
-          "tableName" -> toSQLId(t),
+          "tableName" -> toSQLId(prependCatalogName(t)),
           "proposal" -> "`id`"
         ),
         context = ExpectedContext(
           fragment = sqlText,
           start = 0,
-          stop = 31 + toSQLId(t).length)
+          stop = 31 + t.length)
       )
 
       // with if exists it should pass
