@@ -792,7 +792,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
         parameters = Map(
-          "objectName" -> "`point`",
+          "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
         )
@@ -892,7 +892,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         parameters = Map(
           "objectName" -> "`non_exist`",
           "tableName" -> toSQLId(t),
-          "proposal" -> "`a`, 'point', 'b'"
+          "proposal" -> "`a`, `point`, `b`"
         )
       )
 
@@ -1004,7 +1004,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
         parameters = Map(
-          "objectName" -> "`point`",
+          "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
         )
@@ -1127,7 +1127,7 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
         errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
         sqlState = "42703",
         parameters = Map(
-          "objectName" -> "`point`",
+          "objectName" -> "`point`.`x`",
           "tableName" -> toSQLId(t),
           "proposal" -> "`id`"
         )
@@ -1302,11 +1302,18 @@ trait AlterTableTests extends SharedSparkSession with QueryErrorsBase {
     withTable(t) {
       sql(s"CREATE TABLE $t (id int) USING $v2Format")
 
-      val exc = intercept[AnalysisException] {
-        sql(s"ALTER TABLE $t DROP COLUMN point.x")
-      }
-
-      assert(exc.getMessage.contains("Missing field point.x"))
+      checkError(
+        exception = intercept[AnalysisException] {
+          sql(s"ALTER TABLE $t DROP COLUMN point.x")
+        },
+        errorClass = "UNRESOLVED_COLUMN.WITH_SUGGESTION_AND_TABLE",
+        sqlState = "42703",
+        parameters = Map(
+          "objectName" -> "`point`.`x`",
+          "tableName" -> toSQLId(t),
+          "proposal" -> "`id`"
+        )
+      )
 
       // with if exists it should pass
       sql(s"ALTER TABLE $t DROP COLUMN IF EXISTS point.x")
