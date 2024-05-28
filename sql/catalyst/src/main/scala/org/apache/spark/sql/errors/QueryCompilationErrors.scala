@@ -2895,21 +2895,13 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def showCreateTableNotSupportedOnTempView(table: String): Throwable = {
     new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1270",
+      errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_TEMPORARY_VIEW",
       messageParameters = Map("table" -> table))
-  }
-
-  def showCreateTableFailToExecuteUnsupportedFeatureError(table: CatalogTable): Throwable = {
-    new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1271",
-      messageParameters = Map(
-        "unsupportedFeatures" -> table.unsupportedFeatures.map(" - " + _).mkString("\n"),
-        "table" -> table.identifier.toString))
   }
 
   def showCreateTableNotSupportTransactionalHiveTableError(table: CatalogTable): Throwable = {
     new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1272",
+      errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_TRANSACTIONAL_HIVE_TABLE",
       messageParameters = Map("table" -> table.identifier.toString))
   }
 
@@ -2917,7 +2909,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       table: TableIdentifier,
       builder: mutable.StringBuilder): Throwable = {
     new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1273",
+      errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.WITH_UNSUPPORTED_SERDE_CONFIGURATION",
       messageParameters = Map(
         "table" -> table.identifier,
         "configs" -> builder.toString()))
@@ -2926,7 +2918,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
   def showCreateTableAsSerdeNotAllowedOnSparkDataSourceTableError(
       table: TableIdentifier): Throwable = {
     new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1274",
+      errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.WITH_UNNECESSARY_SERDE_PARAMETER",
       messageParameters = Map("table" -> table.toString))
   }
 
@@ -2934,7 +2926,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       table: CatalogTable,
       features: Seq[String]): Throwable = {
     new AnalysisException(
-      errorClass = "_LEGACY_ERROR_TEMP_1275",
+      errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.WITH_UNSUPPORTED_FEATURE",
       messageParameters = Map(
         "table" -> table.identifier.toString,
         "features" -> features.map(" - " + _).mkString("\n")))

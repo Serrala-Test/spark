@@ -2682,7 +2682,7 @@
         "usedBy": ["SQL/Foundation"]
     },
     "33000": {
-        "description": "invalid SQL descriptor nameno subclass)",
+        "description": "invalid SQL descriptor nameno subclass",
         "origin": "SQL/Foundation",
         "standard": "Y",
         "usedBy": ["SQL/Foundation", "Oracle"]
