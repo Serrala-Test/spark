@@ -23,6 +23,7 @@ import java.time.{Duration, Instant, LocalDate, LocalDateTime, Period}
 import scala.language.implicitConversions
 
 import org.apache.spark.api.java.function.FilterFunction
+import org.apache.spark.rdd.PartitionCoalescer
 import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.expressions._
@@ -503,6 +504,9 @@ package object dsl {
 
       def coalesce(num: Integer): LogicalPlan =
         Repartition(num, shuffle = false, logicalPlan)
+
+      def coalesce(num: Integer, coalescer: Option[PartitionCoalescer]): LogicalPlan =
+        Repartition(num, shuffle = false, logicalPlan, coalescer)
 
       def repartition(num: Integer): LogicalPlan =
         Repartition(num, shuffle = true, logicalPlan)

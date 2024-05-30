@@ -36,7 +36,7 @@ import org.apache.spark.api.java.function._
 import org.apache.spark.api.python.{PythonRDD, SerDeUtil}
 import org.apache.spark.api.r.RRDD
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PartitionCoalescer, RDD}
 import org.apache.spark.resource.ResourceProfile
 import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow, QueryPlanningTracker, ScalaReflection, TableIdentifier}
 import org.apache.spark.sql.catalyst.analysis._
@@ -3834,6 +3834,18 @@ class Dataset[T] private[sql](
    */
   def coalesce(numPartitions: Int): Dataset[T] = withTypedPlan {
     Repartition(numPartitions, shuffle = false, logicalPlan)
+  }
+
+  /**
+   * Returns a new Dataset that an user-defined `PartitionCoalescer` reduces into fewer partitions.
+   * `userDefinedCoalescer` is the same with a coalescer used in the `RDD` coalesce function.
+   *
+   * @group typedrel
+   * @since 1.6.0
+   */
+  def coalesce(numPartitions: Int,
+               userDefinedCoalescer: Option[PartitionCoalescer]): Dataset[T] = withTypedPlan {
+    Repartition(numPartitions, shuffle = false, logicalPlan, userDefinedCoalescer)
   }
 
   /**
