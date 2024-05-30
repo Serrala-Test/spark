@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.json.JsonReadFeature
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.{DataSourceOptions, FileSourceOptions}
 import org.apache.spark.sql.catalyst.util._
+import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.internal.{LegacyBehaviorPolicy, SQLConf}
 
 /**
@@ -107,7 +108,13 @@ class JSONOptions(
   val writeNullIfWithDefaultValue = SQLConf.get.jsonWriteNullIfWithDefaultValue
 
   // A language tag in IETF BCP 47 format
-  val locale: Locale = parameters.get(LOCALE).map(Locale.forLanguageTag).getOrElse(Locale.US)
+  val locale: Locale = parameters.get(LOCALE)
+    .map {
+      case null =>
+        throw QueryExecutionErrors.localeIsNull()
+      case value => Locale.forLanguageTag(value)
+    }
+    .getOrElse(Locale.US)
 
   val zoneId: ZoneId = DateTimeUtils.getZoneId(
     parameters.getOrElse(DateTimeUtils.TIMEZONE_OPTION, defaultTimeZoneId))
