@@ -127,7 +127,7 @@ class ClientE2ETestSuite
       assert(ex.getCause.isInstanceOf[SparkException])
 
       val cause = ex.getCause.asInstanceOf[SparkException]
-      assert(cause.getErrorClass == null)
+      assert(cause.getErrorClass == "UNCLASSIFIED")
       assert(cause.getMessageParameters.isEmpty)
       assert(cause.getMessage.contains("test" * 10000))
     }
