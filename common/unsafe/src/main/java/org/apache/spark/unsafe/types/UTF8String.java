@@ -780,8 +780,8 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * @param start the start position of the current string for searching
    * @return the position of the first occurrence of the empty substr (now, always 0)
    */
-  public int indexOfEmpty(int start) {
-    return 0; // TODO: Fix this behaviour (SPARK-48284)
+  public int indexOfEmpty(UTF8String v, int start) {
+    return start >= numChars() ? 0 : start;
   }
 
   /**
@@ -794,7 +794,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   public int indexOf(UTF8String v, int start) {
     if (v.numBytes() == 0) {
-      return indexOfEmpty(start);
+      return indexOfEmpty(v, start);
     }
 
     // locate to the start position.
