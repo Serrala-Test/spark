@@ -492,8 +492,14 @@ object JdbcUtils extends Logging with SQLConfHelper {
       }
 
     case TimestampType =>
+      val calendar = if (!conf.useNullCalendar) {
+        dialect.getDatabaseCalendar.orNull
+      } else {
+        null
+      }
+
       (rs: ResultSet, row: InternalRow, pos: Int) =>
-        val t = rs.getTimestamp(pos + 1)
+        val t = rs.getTimestamp(pos + 1, calendar)
         if (t != null) {
           row.setLong(pos, fromJavaTimestamp(dialect.convertJavaTimestampToTimestamp(t)))
         } else {
@@ -658,12 +664,19 @@ object JdbcUtils extends Logging with SQLConfHelper {
         stmt.setBytes(pos + 1, row.getAs[Array[Byte]](pos))
 
     case TimestampType =>
+      val calendar = if (!conf.useNullCalendar) {
+        dialect.getDatabaseCalendar.orNull
+      } else {
+        null
+      }
+
       if (conf.datetimeJava8ApiEnabled) {
         (stmt: PreparedStatement, row: Row, pos: Int) =>
-          stmt.setTimestamp(pos + 1, toJavaTimestamp(instantToMicros(row.getAs[Instant](pos))))
+          stmt.setTimestamp(pos + 1, toJavaTimestamp(instantToMicros(row.getAs[Instant](pos))),
+            calendar)
       } else {
         (stmt: PreparedStatement, row: Row, pos: Int) =>
-          stmt.setTimestamp(pos + 1, row.getAs[java.sql.Timestamp](pos))
+          stmt.setTimestamp(pos + 1, row.getAs[java.sql.Timestamp](pos), calendar)
       }
 
     case TimestampNTZType =>

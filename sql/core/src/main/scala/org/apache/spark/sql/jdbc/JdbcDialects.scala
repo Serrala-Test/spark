@@ -20,7 +20,7 @@ package org.apache.spark.sql.jdbc
 import java.sql.{Connection, Date, Driver, ResultSetMetaData, Statement, Timestamp}
 import java.time.{Instant, LocalDate, LocalDateTime}
 import java.util
-import java.util.ServiceLoader
+import java.util.{Calendar, ServiceLoader, TimeZone}
 import java.util.concurrent.TimeUnit
 
 import scala.collection.mutable.ArrayBuilder
@@ -216,6 +216,16 @@ abstract class JdbcDialect extends Serializable with Logging {
   }
 
   /**
+   * Returns a calendar that will be used when reading (rs.getTimestamp) or
+   * writing to the database (setTimestamp). If the calendar is None, old code path
+   * in [[JdbcUtils]] will be hit and calendar won't be used.
+   * @return
+   */
+  @Since("4.0.0")
+  def getDatabaseCalendar: Option[Calendar] =
+    Some(Calendar.getInstance(TimeZone.getTimeZone(SQLConf.get.sessionLocalTimeZone)))
+
+  /**
    * Returns a factory for creating connections to the given JDBC URL.
    * In general, creating a connection has nothing to do with JDBC partition id.
    * But sometimes it is needed, such as a database with multiple shard nodes.
@@ -361,7 +371,14 @@ abstract class JdbcDialect extends Serializable with Logging {
   @Since("2.3.0")
   def compileValue(value: Any): Any = value match {
     case stringValue: String => s"'${escapeSql(stringValue)}'"
-    case timestampValue: Timestamp => "'" + timestampValue + "'"
+    case timestampValue: Timestamp =>
+      if (!SQLConf.get.useNullCalendar) {
+        val timestampFormatter = TimestampFormatter.getFractionFormatter(
+          DateTimeUtils.getZoneId(SQLConf.get.sessionLocalTimeZone))
+        s"'${timestampFormatter.format(timestampValue)}'"
+      } else {
+        "'" + timestampValue + "'"
+      }
     case timestampValue: LocalDateTime =>
       val timestampFormatter = TimestampFormatter.getFractionFormatter(
         DateTimeUtils.getZoneId(SQLConf.get.sessionLocalTimeZone))

@@ -69,11 +69,14 @@ class OracleIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JDBCTes
     "scan with aggregate push-down: REGR_INTERCEPT with DISTINCT",
     "scan with aggregate push-down: REGR_SLOPE with DISTINCT",
     "scan with aggregate push-down: REGR_R2 with DISTINCT",
-    "scan with aggregate push-down: REGR_SXY with DISTINCT")
+    "scan with aggregate push-down: REGR_SXY with DISTINCT",
+    "simple timestamps roundtrip",
+    "simple timestamps pushdown")
 
   override val catalogName: String = "oracle"
   override val namespaceOpt: Option[String] = Some("SYSTEM")
   override val db = new OracleDatabaseOnDocker
+  override def url: String = db.getJdbcUrl(dockerIp, externalPort)
 
   override def defaultMetadata(dataType: DataType): Metadata = new MetadataBuilder()
     .putLong("scale", 0)
@@ -84,7 +87,7 @@ class OracleIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JDBCTes
 
   override def sparkConf: SparkConf = super.sparkConf
     .set("spark.sql.catalog.oracle", classOf[JDBCTableCatalog].getName)
-    .set("spark.sql.catalog.oracle.url", db.getJdbcUrl(dockerIp, externalPort))
+    .set("spark.sql.catalog.oracle.url", url)
     .set("spark.sql.catalog.oracle.pushDownAggregate", "true")
     .set("spark.sql.catalog.oracle.pushDownLimit", "true")
     .set("spark.sql.catalog.oracle.pushDownOffset", "true")
@@ -130,6 +133,29 @@ class OracleIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JDBCTes
   }
 
   override def caseConvert(tableName: String): String = tableName.toUpperCase(Locale.ROOT)
+
+  override protected val timestampTZType: String = "TIMESTAMP WITH LOCAL TIME ZONE"
+
+  override protected def prepareTimestampTable(tableName: String, insert: Boolean = true): Unit = {
+    withConnection { conn =>
+      conn.prepareStatement(
+        s"""CREATE TABLE $tableName
+           |(timestampntz $timestampNTZType, timestamptz $timestampTZType)
+           |""".stripMargin).executeUpdate()
+      if (insert) {
+        conn.prepareStatement(
+          s"""
+             |insert into $tableName VALUES
+             |(TO_TIMESTAMP('2022-03-03 02:00:00', 'YYYY-MM-DD HH:MI:SS'),
+             |TO_TIMESTAMP_TZ('2022-03-03 02:00:00 +0:00', 'YYYY-MM-DD HH:MI:SS TZH:TZM')),
+             |(TO_TIMESTAMP('2022-03-02 02:00:00', 'YYYY-MM-DD HH:MI:SS'),
+             |TO_TIMESTAMP_TZ('2022-03-02 02:00:00 +2:00', 'YYYY-MM-DD HH:MI:SS TZH:TZM')),
+             |(TO_TIMESTAMP('2022-03-01 02:00:00', 'YYYY-MM-DD HH:MI:SS'),
+             |TO_TIMESTAMP_TZ('2022-03-01 02:00:00 +3:00', 'YYYY-MM-DD HH:MI:SS TZH:TZM'))
+             |""".stripMargin).executeUpdate()
+      }
+    }
+  }
 
   test("SPARK-46478: Revert SPARK-43049 to use varchar(255) for string") {
     val tableName = catalogName + ".t1"

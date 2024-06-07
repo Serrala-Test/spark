@@ -47,9 +47,10 @@ class PostgresIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JDBCT
     override def getJdbcUrl(ip: String, port: Int): String =
       s"jdbc:postgresql://$ip:$port/postgres?user=postgres&password=rootpass"
   }
+  override def url: String = db.getJdbcUrl(dockerIp, externalPort)
   override def sparkConf: SparkConf = super.sparkConf
     .set("spark.sql.catalog.postgresql", classOf[JDBCTableCatalog].getName)
-    .set("spark.sql.catalog.postgresql.url", db.getJdbcUrl(dockerIp, externalPort))
+    .set("spark.sql.catalog.postgresql.url", url)
     .set("spark.sql.catalog.postgresql.pushDownTableSample", "true")
     .set("spark.sql.catalog.postgresql.pushDownLimit", "true")
     .set("spark.sql.catalog.postgresql.pushDownAggregate", "true")
@@ -109,6 +110,9 @@ class PostgresIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JDBCT
   override def supportsIndex: Boolean = true
 
   override def indexOptions: String = "FILLFACTOR=70"
+
+  override protected val timestampNTZType: String = "timestamp without time zone"
+  override protected val timestampTZType: String = "timestamp with time zone"
 
   test("SPARK-42964: SQLState: 42P07 - duplicated table") {
     val t1 = s"$catalogName.t1"

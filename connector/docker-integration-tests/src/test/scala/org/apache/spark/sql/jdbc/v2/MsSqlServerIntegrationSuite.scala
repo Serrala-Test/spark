@@ -18,10 +18,13 @@
 package org.apache.spark.sql.jdbc.v2
 
 import java.sql.Connection
+import java.time.ZoneId
 
 import org.apache.spark.{SparkConf, SparkSQLFeatureNotSupportedException}
 import org.apache.spark.sql.AnalysisException
+import org.apache.spark.sql.catalyst.util.DateTimeTestUtils.withDefaultTimeZone
 import org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.jdbc.MsSQLServerDatabaseOnDocker
 import org.apache.spark.sql.types._
 import org.apache.spark.tags.DockerTest
@@ -55,14 +58,17 @@ class MsSqlServerIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JD
     "scan with aggregate push-down: REGR_R2 with DISTINCT",
     "scan with aggregate push-down: REGR_R2 without DISTINCT",
     "scan with aggregate push-down: REGR_SXY with DISTINCT",
-    "scan with aggregate push-down: REGR_SXY without DISTINCT")
+    "scan with aggregate push-down: REGR_SXY without DISTINCT",
+    "simple timestamps roundtrip",
+    "simple timestamps pushdown")
 
   override val catalogName: String = "mssql"
   override val db = new MsSQLServerDatabaseOnDocker
+  override def url: String = db.getJdbcUrl(dockerIp, externalPort)
 
   override def sparkConf: SparkConf = super.sparkConf
     .set("spark.sql.catalog.mssql", classOf[JDBCTableCatalog].getName)
-    .set("spark.sql.catalog.mssql.url", db.getJdbcUrl(dockerIp, externalPort))
+    .set("spark.sql.catalog.mssql.url", url)
     .set("spark.sql.catalog.mssql.pushDownAggregate", "true")
     .set("spark.sql.catalog.mssql.pushDownLimit", "true")
 
@@ -118,6 +124,9 @@ class MsSqlServerIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JD
       errorClass = "_LEGACY_ERROR_TEMP_2271")
   }
 
+  override protected val timestampNTZType: String = "datetime"
+  override protected val timestampTZType: String = "datetimeoffset"
+
   test("SPARK-47440: SQLServer does not support boolean expression in binary comparison") {
     val df1 = sql("SELECT name FROM " +
       s"$catalogName.employee WHERE ((name LIKE 'am%') = (name LIKE '%y'))")
@@ -145,5 +154,59 @@ class MsSqlServerIntegrationSuite extends DockerJDBCIntegrationV2Suite with V2JD
         |WHERE deptString = 'first'
         |""".stripMargin)
     assert(df.collect().length == 2)
+  }
+
+  test("simple timestamps pushdown for MSSQL") {
+    for (java8APIenabled <- Seq("false", "true")) {
+      withSQLConf(("spark.sql.session.timeZone", "America/Los_Angeles"),
+        (SQLConf.DATETIME_JAVA8API_ENABLED.key, java8APIenabled)) {
+        withTable(s"$catalogName.timestamps") {
+          val tableName = "timestamps"
+          prepareTimestampTable(tableName)
+
+          val filteredNTZDf = sql(
+            s"""SELECT timestampntz FROM $catalogName.${caseConvert(tableName)}
+               |WHERE timestampntz = '2022-03-03 02:00:00'""".stripMargin)
+
+          val outputAfterFilterNTZ = filteredNTZDf.showString(20, 20)
+          assert(outputAfterFilterNTZ.contains("2022-03-03 02:00:00"))
+          assert(filteredNTZDf.collect().length == 1)
+        }
+      }
+
+      withSQLConf(("spark.sql.session.timeZone", "GMT"),
+        (SQLConf.DATETIME_JAVA8API_ENABLED.key, java8APIenabled)) {
+        withTable(s"$catalogName.timestamps") {
+          val tableName = "timestamps"
+          prepareTimestampTable(tableName)
+
+          val filteredNTZDf = sql(
+            s"""SELECT timestampntz FROM $catalogName.${caseConvert(tableName)}
+               |WHERE timestampntz = '2022-03-03 02:00:00'""".stripMargin)
+
+          val outputAfterFilterNTZ = filteredNTZDf.showString(20, 20)
+          assert(outputAfterFilterNTZ.contains("2022-03-03 02:00:00"))
+          assert(filteredNTZDf.collect().length == 1)
+        }
+      }
+
+      withDefaultTimeZone(ZoneId.of("GMT-2")) {
+        withSQLConf(("spark.sql.session.timeZone", "America/Los_Angeles"),
+          (SQLConf.DATETIME_JAVA8API_ENABLED.key, java8APIenabled)) {
+          withTable(s"$catalogName.timestamps") {
+            val tableName = "timestamps"
+            prepareTimestampTable(tableName)
+
+            val filteredNTZDf = sql(
+              s"""SELECT timestampntz FROM $catalogName.${caseConvert(tableName)}
+                 |WHERE timestampntz = '2022-03-03 02:00:00'""".stripMargin)
+
+            val outputAfterFilterNTZ = filteredNTZDf.showString(20, 20)
+            assert(outputAfterFilterNTZ.contains("2022-03-03 02:00:00"))
+            assert(filteredNTZDf.collect().length == 1)
+          }
+        }
+      }
+    }
   }
 }

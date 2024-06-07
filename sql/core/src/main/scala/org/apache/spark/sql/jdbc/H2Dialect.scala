@@ -19,7 +19,7 @@ package org.apache.spark.sql.jdbc
 
 import java.sql.{Connection, SQLException, Types}
 import java.util
-import java.util.Locale
+import java.util.{Calendar, Locale}
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.jdk.CollectionConverters._
@@ -81,6 +81,8 @@ private[sql] case class H2Dialect() extends JdbcDialect {
       JdbcType(s"NUMERIC(${t.precision},${t.scale})", Types.NUMERIC))
     case _ => JdbcUtils.getCommonJDBCType(dt)
   }
+
+  override def getDatabaseCalendar: Option[Calendar] = None
 
   private val functionMap: java.util.Map[String, UnboundFunction] =
     new ConcurrentHashMap[String, UnboundFunction]()
