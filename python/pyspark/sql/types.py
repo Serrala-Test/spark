@@ -628,6 +628,9 @@ class YearMonthIntervalType(AnsiIntervalType):
 
     jsonValue = _str_repr
 
+    def needConversion(self) -> bool:
+        return True
+
     def toInternal(self, obj: Any) -> Any:
         raise PySparkNotImplementedError(
             error_class="NOT_IMPLEMENTED",
