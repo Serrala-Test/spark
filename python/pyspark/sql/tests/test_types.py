@@ -2241,6 +2241,10 @@ class TypesTestsMixin:
                 self.spark.createDataFrame([[[[1, 1.0]]]]).schema.fields[0].dataType,
             )
 
+    def test_collect_year_month_interval(self):
+        with self.assertRaises(Exception):
+            self.spark.sql("SELECT INTERVAL '10-8' YEAR TO MONTH AS interval").first()
+
 
 class DataTypeTests(unittest.TestCase):
     # regression test for SPARK-6055
