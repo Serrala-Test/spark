@@ -586,7 +586,10 @@ class DayTimeIntervalType(AnsiIntervalType):
 
 
 class YearMonthIntervalType(AnsiIntervalType):
-    """YearMonthIntervalType, represents year-month intervals of the SQL standard"""
+    """YearMonthIntervalType, represents year-month intervals of the SQL standard
+
+    Note that this data type doesn't support collection: df.collect/take/head.
+    """
 
     YEAR = 0
     MONTH = 1
