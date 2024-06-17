@@ -309,13 +309,45 @@ private[sql] class RocksDBStateStoreProvider
     }
   }
 
+  override def getStore(startVersion: Long, endVersion: Long): StateStore = {
+    try {
+      if (startVersion < 1) {
+        throw QueryExecutionErrors.unexpectedStateStoreVersion(startVersion)
+      }
+      if (endVersion < startVersion) {
+        throw QueryExecutionErrors.unexpectedStateStoreVersion(endVersion)
+      }
+      rocksDB.load(startVersion, endVersion, readOnly = false)
+      new RocksDBStateStore(endVersion)
+    }
+    catch {
+      case e: Throwable => throw QueryExecutionErrors.cannotLoadStore(e)
+    }
+  }
+
   override def getReadStore(version: Long): StateStore = {
     try {
       if (version < 0) {
         throw QueryExecutionErrors.unexpectedStateStoreVersion(version)
       }
-      rocksDB.load(version, true)
+      rocksDB.load(version, readOnly = true)
       new RocksDBStateStore(version)
+    }
+    catch {
+      case e: Throwable => throw QueryExecutionErrors.cannotLoadStore(e)
+    }
+  }
+
+  override def getReadStore(startVersion: Long, endVersion: Long): StateStore = {
+    try {
+      if (startVersion < 1) {
+        throw QueryExecutionErrors.unexpectedStateStoreVersion(startVersion)
+      }
+      if (endVersion < startVersion) {
+        throw QueryExecutionErrors.unexpectedStateStoreVersion(endVersion)
+      }
+      rocksDB.load(startVersion, endVersion, readOnly = true)
+      new RocksDBStateStore(endVersion)
     }
     catch {
       case e: Throwable => throw QueryExecutionErrors.cannotLoadStore(e)

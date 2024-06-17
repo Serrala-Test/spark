@@ -18,16 +18,17 @@ package org.apache.spark.sql.execution.datasources.v2.state
 
 import java.io.{File, FileWriter}
 
+import org.apache.hadoop.conf.Configuration
 import org.scalatest.Assertions
 
-import org.apache.spark.SparkUnsupportedOperationException
+import org.apache.spark.{SparkException, SparkUnsupportedOperationException}
 import org.apache.spark.io.CompressionCodec
 import org.apache.spark.sql.{AnalysisException, DataFrame, Encoders, Row}
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, GenericInternalRow}
 import org.apache.spark.sql.catalyst.plans.physical.HashPartitioning
 import org.apache.spark.sql.execution.datasources.v2.state.utils.SchemaUtil
 import org.apache.spark.sql.execution.streaming.{CommitLog, MemoryStream, OffsetSeqLog}
-import org.apache.spark.sql.execution.streaming.state.{HDFSBackedStateStoreProvider, RocksDBStateStoreProvider, StateStore}
+import org.apache.spark.sql.execution.streaming.state._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.{IntegerType, StructType}
@@ -194,6 +195,78 @@ class StateDataSourceNegativeTestSuite extends StateDataSourceTestBase {
       }
     }
   }
+
+  test("ERROR: snapshotStartBatchId specified as a negative value") {
+    withTempDir { tempDir =>
+      val exc = intercept[StateDataSourceInvalidOptionValueIsNegative] {
+        spark.read.format("statestore")
+          // trick to bypass getting the last committed batch before validating operator ID
+          .option(StateSourceOptions.BATCH_ID, 0)
+          .option(StateSourceOptions.SNAPSHOT_START_BATCH_ID, -1)
+          .load(tempDir.getAbsolutePath)
+      }
+      checkError(exc, "STDS_INVALID_OPTION_VALUE.IS_NEGATIVE", "42616",
+        Map("optionName" -> StateSourceOptions.SNAPSHOT_START_BATCH_ID))
+    }
+  }
+
+  test("ERROR: snapshotPartitionId specified as a negative value") {
+    withTempDir { tempDir =>
+      val exc = intercept[StateDataSourceInvalidOptionValueIsNegative] {
+        spark.read.format("statestore")
+          // trick to bypass getting the last committed batch before validating operator ID
+          .option(StateSourceOptions.BATCH_ID, 0)
+          .option(StateSourceOptions.SNAPSHOT_PARTITION_ID, -1)
+          .load(tempDir.getAbsolutePath)
+      }
+      checkError(exc, "STDS_INVALID_OPTION_VALUE.IS_NEGATIVE", "42616",
+        Map("optionName" -> StateSourceOptions.SNAPSHOT_PARTITION_ID))
+    }
+  }
+
+  test("ERROR: snapshotStartBatchId specified without snapshotPartitionId or vice versa") {
+    withTempDir { tempDir =>
+      val exc = intercept[StateDataSourceUnspecifiedRequiredOption] {
+        spark.read.format("statestore")
+          // trick to bypass getting the last committed batch before validating operator ID
+          .option(StateSourceOptions.BATCH_ID, 0)
+          .option(StateSourceOptions.SNAPSHOT_START_BATCH_ID, 0)
+          .load(tempDir.getAbsolutePath)
+      }
+      checkError(exc, "STDS_REQUIRED_OPTION_UNSPECIFIED", "42601",
+        Map("optionName" -> StateSourceOptions.SNAPSHOT_PARTITION_ID))
+    }
+
+    withTempDir { tempDir =>
+      val exc = intercept[StateDataSourceUnspecifiedRequiredOption] {
+        spark.read.format("statestore")
+          // trick to bypass getting the last committed batch before validating operator ID
+          .option(StateSourceOptions.BATCH_ID, 0)
+          .option(StateSourceOptions.SNAPSHOT_PARTITION_ID, 0)
+          .load(tempDir.getAbsolutePath)
+      }
+      checkError(exc, "STDS_REQUIRED_OPTION_UNSPECIFIED", "42601",
+        Map("optionName" -> StateSourceOptions.SNAPSHOT_START_BATCH_ID))
+    }
+  }
+
+  test("ERROR: snapshotStartBatchId is greater than snapshotEndBatchId") {
+    withTempDir { tempDir =>
+      val startBatchId = 1
+      val endBatchId = 0
+      val exc = intercept[StateDataSourceInvalidOptionValue] {
+        spark.read.format("statestore")
+          // trick to bypass getting the last committed batch before validating operator ID
+          .option(StateSourceOptions.SNAPSHOT_START_BATCH_ID, startBatchId)
+          .option(StateSourceOptions.BATCH_ID, endBatchId)
+          .load(tempDir.getAbsolutePath)
+      }
+      checkError(exc, "STDS_INVALID_OPTION_VALUE.WITH_MESSAGE", "42616",
+        Map(
+          "optionName" -> StateSourceOptions.SNAPSHOT_START_BATCH_ID,
+          "message" -> s"value should be less than or equal to $endBatchId"))
+    }
+  }
 }
 
 /**
@@ -301,34 +374,103 @@ class StateDataSourceSQLConfigSuite extends StateDataSourceTestBase {
 }
 
 class HDFSBackedStateDataSourceReadSuite extends StateDataSourceReadSuite {
+  override protected def newStateStoreProvider(): HDFSBackedStateStoreProvider =
+    new HDFSBackedStateStoreProvider
+
   override def beforeAll(): Unit = {
     super.beforeAll()
     spark.conf.set(SQLConf.STATE_STORE_PROVIDER_CLASS.key,
-      classOf[HDFSBackedStateStoreProvider].getName)
+      newStateStoreProvider().getClass.getName)
+    // make sure we have a snapshot for every two delta files
+    // HDFS maintenance task will not count the latest delta file, which has the same version
+    // as the snapshot version
+    spark.conf.set(SQLConf.STATE_STORE_MIN_DELTAS_FOR_SNAPSHOT.key, 1)
+  }
+
+  test("ERROR: snapshot of version not found") {
+    testSnapshotNotFound()
+  }
+
+  test("provider.getReadStore(startVersion, endVersion)") {
+    testGetReadStoreWithStartVersion()
+  }
+
+  test("option snapshotPartitionId") {
+    testSnapshotPartitionId()
   }
 }
 
 class RocksDBStateDataSourceReadSuite extends StateDataSourceReadSuite {
+  override protected def newStateStoreProvider(): RocksDBStateStoreProvider =
+    new RocksDBStateStoreProvider
+
   override def beforeAll(): Unit = {
     super.beforeAll()
     spark.conf.set(SQLConf.STATE_STORE_PROVIDER_CLASS.key,
-      classOf[RocksDBStateStoreProvider].getName)
+      newStateStoreProvider().getClass.getName)
     spark.conf.set("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled",
       "false")
   }
 }
 
-class RocksDBWithChangelogCheckpointStateDataSourceReaderSuite extends StateDataSourceReadSuite {
+class RocksDBWithChangelogCheckpointStateDataSourceReaderSuite extends
+StateDataSourceReadSuite {
+  override protected def newStateStoreProvider(): RocksDBStateStoreProvider =
+    new RocksDBStateStoreProvider
+
   override def beforeAll(): Unit = {
     super.beforeAll()
     spark.conf.set(SQLConf.STATE_STORE_PROVIDER_CLASS.key,
-      classOf[RocksDBStateStoreProvider].getName)
+      newStateStoreProvider().getClass.getName)
     spark.conf.set("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled",
       "true")
+    // make sure we have a snapshot for every other checkpoint
+    // RocksDB maintenance task will count the latest checkpoint, so we need to set it to 2
+    spark.conf.set(SQLConf.STATE_STORE_MIN_DELTAS_FOR_SNAPSHOT.key, 2)
+  }
+
+  test("ERROR: snapshot of version not found") {
+    testSnapshotNotFound()
+  }
+
+  test("provider.getReadStore(startVersion, endVersion)") {
+    testGetReadStoreWithStartVersion()
+  }
+
+  test("option snapshotPartitionId") {
+    testSnapshotPartitionId()
   }
 }
 
 abstract class StateDataSourceReadSuite extends StateDataSourceTestBase with Assertions {
+
+  import testImplicits._
+  import StateStoreTestsHelper._
+
+  protected val keySchema: StructType = StateStoreTestsHelper.keySchema
+  protected val valueSchema: StructType = StateStoreTestsHelper.valueSchema
+
+  protected def newStateStoreProvider(): StateStoreProvider
+
+  /**
+   * Calls the overridable [[newStateStoreProvider]] to create the state store provider instance.
+   * Initialize it with the configuration set by child classes.
+   *
+   * @param checkpointDir        path to store state information
+   * @return instance of class extending [[StateStoreProvider]]
+   */
+  private def getNewStateStoreProvider(checkpointDir: String): StateStoreProvider = {
+    val provider = newStateStoreProvider()
+    provider.init(
+      StateStoreId(checkpointDir, 0, 0),
+      keySchema,
+      valueSchema,
+      NoPrefixKeyStateEncoderSpec(keySchema),
+      useColumnFamilies = false,
+      StateStoreConf(spark.sessionState.conf),
+      new Configuration)
+    provider
+  }
 
   test("simple aggregation, state ver 1") {
     testStreamingAggregation(1)
@@ -795,5 +937,79 @@ abstract class StateDataSourceReadSuite extends StateDataSourceTestBase with Ass
       testForSide("left")
       testForSide("right")
     }
+  }
+
+  protected def testSnapshotNotFound(): Unit = {
+    withTempDir(tempDir => {
+      val provider = getNewStateStoreProvider(tempDir.getAbsolutePath)
+      for (i <- 1 to 4) {
+        val store = provider.getStore(i - 1)
+        put(store, "a", i, i)
+        store.commit()
+        provider.doMaintenance() // create a snapshot every other delta file
+      }
+
+      val exc = intercept[SparkException] {
+        provider.getReadStore(1, 2)
+      }
+      checkError(exc, "CANNOT_LOAD_STATE_STORE.UNCATEGORIZED")
+    })
+  }
+
+  protected def testGetReadStoreWithStartVersion(): Unit = {
+    withTempDir(tempDir => {
+      val provider = getNewStateStoreProvider(tempDir.getAbsolutePath)
+      for (i <- 1 to 4) {
+        val store = provider.getStore(i - 1)
+        put(store, "a", i, i)
+        store.commit()
+        provider.doMaintenance()
+      }
+
+      val result = provider.getReadStore(2, 3)
+
+      assert(get(result, "a", 1).get == 1)
+      assert(get(result, "a", 2).get == 2)
+      assert(get(result, "a", 3).get == 3)
+      assert(get(result, "a", 4).isEmpty)
+
+      provider.close()
+    })
+  }
+
+  protected def testSnapshotPartitionId(): Unit = {
+    withTempDir(tempDir => {
+      val inputData = MemoryStream[Int]
+      val df = inputData.toDF().limit(10)
+
+      testStream(df)(
+        StartStream(checkpointLocation = tempDir.getAbsolutePath),
+        AddData(inputData, 1, 2, 3, 4),
+        CheckLastBatch(1, 2, 3, 4)
+      )
+
+      val stateDf = spark.read.format("statestore")
+        .option(StateSourceOptions.SNAPSHOT_START_BATCH_ID, 0)
+        .option(StateSourceOptions.SNAPSHOT_PARTITION_ID, 0)
+        .option(StateSourceOptions.BATCH_ID, 0)
+        .load(tempDir.getAbsolutePath)
+
+      // should result in only one partition && should not throw error in planning stage
+      assert(stateDf.rdd.getNumPartitions == 1)
+
+      // should throw error when partition id is out of range
+      val stateDfError = spark.read.format("statestore")
+        .option(StateSourceOptions.SNAPSHOT_START_BATCH_ID, 0)
+        .option(
+          StateSourceOptions.SNAPSHOT_PARTITION_ID,
+          spark.sessionState.conf.numShufflePartitions)
+        .option(StateSourceOptions.BATCH_ID, 0)
+        .load(tempDir.getAbsolutePath)
+
+      val exc = intercept[StateStoreSnapshotPartitionNotFound] {
+        stateDfError.show()
+      }
+      assert(exc.getErrorClass === "CANNOT_LOAD_STATE_STORE.SNAPSHOT_PARTITION_ID_NOT_FOUND")
+    })
   }
 }

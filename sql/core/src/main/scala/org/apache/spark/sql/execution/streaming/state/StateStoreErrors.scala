@@ -149,6 +149,17 @@ object StateStoreErrors {
       newValueSchema: String): StateStoreValueSchemaNotCompatible = {
     new StateStoreValueSchemaNotCompatible(storedValueSchema, newValueSchema)
   }
+
+  def stateStoreSnapshotFileNotFound(fileToRead: String, clazz: String):
+  StateStoreSnapshotFileNotFound = {
+    new StateStoreSnapshotFileNotFound(fileToRead, clazz)
+  }
+
+  def stateStoreSnapshotPartitionNotFound(
+    snapshotPartitionId: Long, operatorId: Int, checkpointLocation: String):
+  StateStoreSnapshotPartitionNotFound = {
+    new StateStoreSnapshotPartitionNotFound(snapshotPartitionId, operatorId, checkpointLocation)
+  }
 }
 
 class StateStoreMultipleColumnFamiliesNotSupportedException(stateStoreProvider: String)
@@ -254,6 +265,22 @@ class StateStoreValueSchemaNotCompatible(
     messageParameters = Map(
       "storedValueSchema" -> storedValueSchema,
       "newValueSchema" -> newValueSchema))
+
+class StateStoreSnapshotFileNotFound(fileToRead: String, clazz: String)
+  extends SparkUnsupportedOperationException(
+    errorClass = "CANNOT_LOAD_STATE_STORE.CANNOT_READ_SNAPSHOT_FILE_NOT_EXISTS",
+    messageParameters = Map(
+      "fileToRead" -> fileToRead,
+      "clazz" -> clazz))
+
+class StateStoreSnapshotPartitionNotFound(
+  snapshotPartitionId: Long, operatorId: Int, checkpointLocation: String)
+  extends SparkUnsupportedOperationException(
+    errorClass = "CANNOT_LOAD_STATE_STORE.SNAPSHOT_PARTITION_ID_NOT_FOUND",
+    messageParameters = Map(
+      "snapshotPartitionId" -> snapshotPartitionId.toString,
+      "operatorId" -> operatorId.toString,
+      "checkpointLocation" -> checkpointLocation))
 
 class StateStoreKeyRowFormatValidationFailure(errorMsg: String)
   extends SparkRuntimeException(

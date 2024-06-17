@@ -229,6 +229,11 @@
           "Error reading snapshot file <fileToRead> of <clazz>: key size cannot be <keySize>."
         ]
       },
+      "CANNOT_READ_SNAPSHOT_FILE_NOT_EXISTS" : {
+        "message" : [
+          "Error reading snapshot file <fileToRead> of <clazz>: <fileToRead> does not exist."
+        ]
+      },
       "CANNOT_READ_SNAPSHOT_FILE_VALUE_SIZE" : {
         "message" : [
           "Error reading snapshot file <fileToRead> of <clazz>: value size cannot be <valueSize>."
@@ -237,6 +242,11 @@
       "CANNOT_READ_STREAMING_STATE_FILE" : {
         "message" : [
           "Error reading streaming state file of <fileToRead> does not exist. If the stream job is restarted with a new or updated state operation, please create a new checkpoint location or clear the existing checkpoint location."
+        ]
+      },
+      "SNAPSHOT_PARTITION_ID_NOT_FOUND" : {
+        "message" : [
+          "Partition id <snapshotPartitionId> not found for state of operator <operatorId> at <checkpointLocation>."
         ]
       },
       "UNCATEGORIZED" : {
