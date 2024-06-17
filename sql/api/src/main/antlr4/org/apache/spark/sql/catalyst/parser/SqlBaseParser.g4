@@ -584,7 +584,7 @@ transformClause
     ;
 
 selectClause
-    : SELECT (hints+=hint)* setQuantifier? namedExpressionSeq
+    : SELECT (hints+=hint)* setQuantifier? namedExpressionSeq COMMA?
     ;
 
 setClause
@@ -1763,7 +1763,6 @@ nonReserved
     | FOREIGN
     | FORMAT
     | FORMATTED
-    | FROM
     | FUNCTION
     | FUNCTIONS
     | GENERATED
