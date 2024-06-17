@@ -35,6 +35,7 @@ import org.apache.spark.sql.catalyst.expressions.SubExprUtils._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.catalyst.expressions.objects._
 import org.apache.spark.sql.catalyst.optimizer.OptimizeUpdateFields
+import org.apache.spark.sql.catalyst.planning.ExtractEquiJoinKeys
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
@@ -356,7 +357,8 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
     Batch("HandleSpecialCommand", Once,
       HandleSpecialCommand),
     Batch("Remove watermark for batch query", Once,
-      EliminateEventTimeWatermark)
+      EliminateEventTimeWatermark),
+    Batch("Debug", Once, DebugInlineColumnsCountInference)
   )
 
   /**
@@ -4129,6 +4131,20 @@ object RemoveTempResolvedColumn extends Rule[LogicalPlan] {
         } else {
           t.child
         }
+    }
+  }
+}
+
+/**
+ * This infers the columns to use for [[DebugInlineColumnsCount]] when its child is a Join.
+ * In this case, it will use the join columns so the application code does not need to specify it.
+ */
+object DebugInlineColumnsCountInference extends Rule[LogicalPlan] {
+  override def apply(plan: LogicalPlan): LogicalPlan = {
+    plan.transform {
+      case DebugInlineColumnsCount(j @ ExtractEquiJoinKeys(_, leftKeys, rightKeys, _, _,
+      _, _, _), sampleColumns, _) if sampleColumns.isEmpty =>
+          DebugInlineColumnsCount(j, leftKeys, Some("join output"))
     }
   }
 }
