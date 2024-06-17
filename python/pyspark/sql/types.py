@@ -1795,7 +1795,7 @@ _INTERVAL_YEARMONTH = re.compile(r"interval (year|month)( to (year|month))?")
 _COLLATIONS_METADATA_KEY = "__COLLATIONS"
 
 
-def _check_collection_support(d: DataType, disallowed: List[str]):
+def _check_collection_support(d: DataType, disallowed: List[str]) -> None:
     if len(disallowed) == 0:
         return
     if d.__class__.__name__ in disallowed:
