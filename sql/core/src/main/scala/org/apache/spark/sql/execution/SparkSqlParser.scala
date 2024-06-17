@@ -694,11 +694,14 @@ class SparkSqlAstBuilder extends AstBuilder {
     } else {
       val serdeInfo = maybeSerdeInfo.get
       if (serdeInfo.storedAs.isEmpty) {
+        val serde = serdeInfo.serde
+          .orElse(serdeInfo.formatClasses
+            .flatMap(f => HiveSerDe.getSerDeFromFormatClasses(f.input, f.output)))
         CatalogStorageFormat.empty.copy(
           locationUri = location.map(CatalogUtils.stringToURI),
           inputFormat = serdeInfo.formatClasses.map(_.input),
           outputFormat = serdeInfo.formatClasses.map(_.output),
-          serde = serdeInfo.serde,
+          serde = serde,
           properties = serdeInfo.serdeProperties)
       } else {
         HiveSerDe.sourceToSerDe(serdeInfo.storedAs.get) match {

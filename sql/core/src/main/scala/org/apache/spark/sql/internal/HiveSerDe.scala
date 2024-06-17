@@ -97,6 +97,16 @@ object HiveSerDe {
   }
 
   /**
+   * Get serde class from format classes
+   */
+  def getSerDeFromFormatClasses(inputFormat: String, outputFormat: String): Option[String] = {
+    serdeMap.find {
+      case (_, serDe) => serDe.inputFormat.get.equalsIgnoreCase(inputFormat) &&
+        serDe.outputFormat.get.equalsIgnoreCase(outputFormat)
+    }.flatMap(_._2.serde)
+  }
+
+  /**
    * Get the Spark data source name from the Hive SerDe information.
    *
    * @param serde Hive SerDe information.
