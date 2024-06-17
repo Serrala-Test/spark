@@ -16,6 +16,7 @@
 #
 from abc import ABC, abstractmethod
 from collections import UserDict
+import pyarrow as pa
 from typing import Any, Dict, Iterator, List, Sequence, Tuple, Type, Union, TYPE_CHECKING
 
 from pyspark.sql import Row
@@ -331,7 +332,7 @@ class DataSourceReader(ABC):
         )
 
     @abstractmethod
-    def read(self, partition: InputPartition) -> Union[Iterator[Tuple], Iterator[Row]]:
+    def read(self, partition: InputPartition) -> Union[Iterator[Tuple], Iterator[pa.RecordBatch]]:
         """
         Generates data for a given partition and returns an iterator of tuples or rows.
 
