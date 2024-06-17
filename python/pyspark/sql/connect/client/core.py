@@ -532,6 +532,7 @@ class AnalyzeResult:
         is_same_semantics: Optional[bool],
         semantic_hash: Optional[int],
         storage_level: Optional[StorageLevel],
+        size_in_bytes: Optional[bytes],
     ):
         self.schema = schema
         self.explain_string = explain_string
@@ -544,6 +545,7 @@ class AnalyzeResult:
         self.is_same_semantics = is_same_semantics
         self.semantic_hash = semantic_hash
         self.storage_level = storage_level
+        self.size_in_bytes = size_in_bytes
 
     @classmethod
     def fromProto(cls, pb: Any) -> "AnalyzeResult":
@@ -558,6 +560,7 @@ class AnalyzeResult:
         is_same_semantics: Optional[bool] = None
         semantic_hash: Optional[int] = None
         storage_level: Optional[StorageLevel] = None
+        size_in_bytes: Optional[bytes] = None
 
         if pb.HasField("schema"):
             schema = types.proto_schema_to_pyspark_data_type(pb.schema.schema)
@@ -585,6 +588,8 @@ class AnalyzeResult:
             pass
         elif pb.HasField("get_storage_level"):
             storage_level = proto_to_storage_level(pb.get_storage_level.storage_level)
+        elif pb.HasField("size_in_bytes"):
+            size_in_bytes = pb.size_in_bytes.result
         else:
             raise SparkConnectException("No analyze result found!")
 
@@ -600,6 +605,7 @@ class AnalyzeResult:
             is_same_semantics,
             semantic_hash,
             storage_level,
+            size_in_bytes,
         )
 
 
@@ -1160,6 +1166,20 @@ class SparkConnectClient(object):
         if self._user_id:
             req.user_context.user_id = self._user_id
         return req
+
+    def _size_in_bytes(self, relation: pb2.Relation) -> AnalyzeResult:
+        req = self._analyze_plan_request_with_metadata()
+        req.size_in_bytes.relation.CopyFrom(relation)
+
+        try:
+            for attempt in self._retrying():
+                with attempt:
+                    resp = self._stub.AnalyzePlan(req, metadata=self._builder.metadata())
+                    self._verify_response_integrity(resp)
+                    return AnalyzeResult.fromProto(resp)
+            raise SparkConnectException("Invalid state during retry exception handling.")
+        except Exception as error:
+            self._handle_error(error)
 
     def _analyze(self, method: str, **kwargs: Any) -> AnalyzeResult:
         """
