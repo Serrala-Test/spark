@@ -158,6 +158,21 @@ class RocksDBFileManager(
 
   @volatile private var rootDirChecked: Boolean = false
 
+  def deepCopy(): RocksDBFileManager = {
+    val newFileManager = new RocksDBFileManager(
+      dfsRootDir,
+      localTempDir,
+      hadoopConf,
+      codecName,
+      loggingId
+    )
+
+    newFileManager.versionToRocksDBFiles.putAll(versionToRocksDBFiles)
+    newFileManager.localFilesToDfsFiles.putAll(localFilesToDfsFiles)
+
+    newFileManager
+  }
+
   def getChangeLogWriter(
       version: Long,
       useColumnFamilies: Boolean = false): StateStoreChangelogWriter = {
